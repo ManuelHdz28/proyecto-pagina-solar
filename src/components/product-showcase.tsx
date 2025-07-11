@@ -118,7 +118,7 @@ export function ProductShowcase() {
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="flex flex-col overflow-hidden bg-card/80 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105">
+            <Card key={product.id} className="flex flex-col overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105">
               <CardHeader className="p-0">
                 <Image
                   src={product.imageUrl}
