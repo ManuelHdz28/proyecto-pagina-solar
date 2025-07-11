@@ -12,73 +12,73 @@ const products = [
   {
     id: 'sp-001',
     name: 'MC-Solar Panel X1',
-    category: 'Panels',
-    description: 'High-efficiency monocrystalline solar panel with a 25-year warranty.',
-    price: 299.99,
+    category: 'Paneles',
+    description: 'Panel solar monocristalino de alta eficiencia con una garantía de 25 años.',
+    price: 99.99,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'solar panel'
   },
   {
     id: 'sp-002',
     name: 'MC-Solar Panel Pro',
-    category: 'Panels',
-    description: 'Our most powerful panel, designed for commercial installations.',
-    price: 449.99,
+    category: 'Paneles',
+    description: 'Nuestro panel más potente, diseñado para instalaciones comerciales.',
+    price: 100.00,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'solar panel roof'
   },
   {
     id: 'inv-001',
-    name: 'Grid-Tie Inverter 5kW',
-    category: 'Inverters',
-    description: 'Efficiently converts DC power from your panels to AC power for your home.',
+    name: 'Inversor de corbata de cuadrícula 5kW',
+    category: 'Inversores',
+    description: 'Convierte de manera eficiente la energía de CC de sus paneles en energía de CA para su hogar.',
     price: 899.00,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'power inverter'
   },
   {
     id: 'bat-001',
-    name: 'Powerwall Battery 10kWh',
-    category: 'Batteries',
-    description: 'Store excess solar energy for use at night or during outages.',
-    price: 5500.00,
+    name: 'Batería Powerwall 10kWh',
+    category: 'Baterías',
+    description: 'Almacena el exceso de energía solar para su uso por la noche o durante cortes de energía.',
+    price: 55.00,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'solar battery'
   },
   {
     id: 'mnt-001',
-    name: 'Roof Mounting Kit',
-    category: 'Mounting',
-    description: 'Durable, all-weather mounting hardware for all roof types.',
+    name: 'Kit de Montaje en Tejado',
+    category: 'Montaje',
+    description: 'Durable, todo tipo de clima hardware de montaje para todo tipo de techos.',
     price: 149.50,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'roof mounting'
   },
   {
     id: 'bat-002',
-    name: 'Powerwall Battery 20kWh',
-    category: 'Batteries',
-    description: 'High-capacity energy storage for complete energy independence.',
-    price: 9800.00,
+    name: 'Batería Powerwall 20kWh',
+    category: 'Baterías',
+    description: 'Almacenamiento de energía de alta capacidad para una independencia energética completa.',
+    price: 98.00,
     imageUrl: 'https://placehold.co/600x400.png',
     dataAiHint: 'solar battery storage'
   },
 ];
 
 const categories = [
-  { name: 'All', icon: Sprout },
-  { name: 'Panels', icon: Zap },
-  { name: 'Inverters', icon: Wrench },
-  { name: 'Batteries', icon: Battery },
-  { name: 'Mounting', icon: Home },
+  { name: 'Todos', icon: Sprout },
+  { name: 'Paneles', icon: Zap },
+  { name: 'Inversores', icon: Wrench },
+  { name: 'Baterías', icon: Battery },
+  { name: 'Montaje', icon: Home },
 ];
 
 export function ProductShowcase() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
 
   const filteredProducts = products.filter((product) => {
-    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || product.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -90,7 +90,7 @@ export function ProductShowcase() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search products by name or description..."
+            placeholder="Buscar productos por nombre o descripción ..."
             className="pl-10 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -142,8 +142,8 @@ export function ProductShowcase() {
         </div>
       ) : (
         <div className="text-center py-16 bg-card/50 rounded-lg">
-            <p className="text-xl font-medium">No Products Found</p>
-            <p className="text-muted-foreground mt-2">Try adjusting your search or filter.</p>
+            <p className="text-xl font-medium">No se encuentran productos</p>
+            <p className="text-muted-foreground mt-2">Intenta ajustar tu búsqueda o filtro.</p>
         </div>
       )}
     </div>

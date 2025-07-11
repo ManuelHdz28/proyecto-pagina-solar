@@ -1,141 +1,134 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormDescription,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Lightbulb, LoaderCircle } from "lucide-react";
-import { getSeoSuggestions } from "@/app/actions";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { LoaderCircle, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  missionStatement: z.string().min(20, {
-    message: "Mission statement must be at least 20 characters.",
-  }).max(500, { message: "Mission statement must be 500 characters or less."}),
-  productDescriptions: z.string().min(50, {
-    message: "Product descriptions must be at least 50 characters.",
-  }).max(1000, { message: "Product descriptions must be 1000 characters or less."}),
+  name: z.string().min(2, { message: "El nombre es obligatorio." }),
+  email: z.string().email({ message: "Introduce un correo válido." }),
+  message: z.string().min(10, { message: "El mensaje debe tener al menos 10 caracteres." }),
 });
 
-export function SeoTool() {
-  const [keywords, setKeywords] = useState<string[]>([]);
+export function ContactForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      missionStatement: "",
-      productDescriptions: "",
+      name: "",
+      email: "",
+      message: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setKeywords([]);
-    const result = await getSeoSuggestions(values);
-    setIsLoading(false);
 
-    if (result.success && result.keywords) {
-      setKeywords(result.keywords);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: result.error || "An unknown error occurred.",
-      });
-    }
+    // Aquí puedes enviar a tu backend o servicio de correo si lo deseas.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    setIsLoading(false);
+    setSubmitted(true);
+
+    toast({
+      title: "Mensaje enviado",
+      description: "Gracias por contactarnos. Te responderemos pronto.",
+    });
+
+    form.reset();
   }
 
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
-          <Lightbulb className="text-primary" />
-          AI-Powered SEO Suggestions
+          <Mail className="text-primary" />
+          Contáctanos
         </CardTitle>
         <CardDescription>
-          Analyze your company's marketing materials to generate relevant SEO keywords and improve online visibility.
+          Completa el formulario y te responderemos lo antes posible.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="missionStatement"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Mission Statement</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g., Our mission is to empower homes and businesses with clean, reliable, and affordable solar energy..."
-                      {...field}
-                      rows={4}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="productDescriptions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Descriptions</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g., We offer high-efficiency monocrystalline solar panels, state-of-the-art inverters, and long-lasting battery storage solutions..."
-                      {...field}
-                      rows={6}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Provide detailed descriptions of your main products.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              Generate Keywords
-            </Button>
-          </form>
-        </Form>
-        {(isLoading || keywords.length > 0) && (
-          <div className="mt-8 pt-8 border-t border-border">
-            <h3 className="text-lg font-semibold">Suggested Keywords:</h3>
-            {isLoading ? (
-              <div className="mt-4 flex items-center text-muted-foreground">
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </div>
-            ) : (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {keywords.map((keyword) => (
-                  <Badge key={keyword} variant="secondary" className="text-base px-3 py-1 bg-accent/20 text-accent-foreground border border-accent">
-                    {keyword}
-                  </Badge>
-                ))}
-              </div>
-            )}
+        {submitted ? (
+          <div className="text-center py-8">
+            <p className="text-lg font-semibold text-primary">¡Gracias por tu mensaje!</p>
+            <p className="mt-2 text-muted-foreground">Pronto nos pondremos en contacto contigo.</p>
           </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Tu nombre" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Correo electrónico</FormLabel>
+                    <FormControl>
+                      <Input placeholder="tu@correo.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mensaje</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Escribe tu mensaje aquí..."
+                        rows={5}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Describe tu consulta o comentario.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                Enviar mensaje
+              </Button>
+            </form>
+          </Form>
         )}
       </CardContent>
     </Card>

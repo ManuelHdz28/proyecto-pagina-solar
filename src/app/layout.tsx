@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'MC Solar Showcase',
+  title: 'GRUPO MC SOLAR',
   description: 'Top-tier solar panel solutions to power your future.',
 };
 
