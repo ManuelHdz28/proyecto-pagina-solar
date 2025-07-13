@@ -41,10 +41,23 @@ export function ContactForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
+  setIsLoading(true);
 
-    // Aquí puedes enviar a tu backend o servicio de correo si lo deseas.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    const res = await fetch("http://localhost:8000/api/messages/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+
+    const text = await res.text();
+    console.log("Respuesta bruta:", text);
+
+    if (!res.ok) {
+      throw new Error("Error al enviar el mensaje");
+    }
 
     setIsLoading(false);
     setSubmitted(true);
@@ -55,7 +68,18 @@ export function ContactForm() {
     });
 
     form.reset();
+  } catch (error) {
+    console.error(error);
+    setIsLoading(false);
+    toast({
+      title: "Error",
+      description: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+      variant: "destructive",
+    });
   }
+}
+
+
 
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm">
