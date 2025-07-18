@@ -21,9 +21,14 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'grupo-mc-solar.onrender.com', // 👈 dominio de Render
+        port: '',
+        pathname: '/media/**',
+      },
     ],
   },
 };
 
 export default nextConfig;
-
