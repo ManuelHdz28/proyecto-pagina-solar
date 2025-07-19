@@ -51,6 +51,7 @@ export function ProductShowcase() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const backendUrl = "https://grupo-mc-solar.onrender.com";
 
   useEffect(() => {
     async function loadProducts() {
@@ -115,17 +116,19 @@ export function ProductShowcase() {
               className="flex flex-col cursor-pointer overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
             >
               <CardHeader className="p-0">
-                <Image
-                  src={
-                    product.images && product.images.length > 0
-                      ? product.images[0].image
-                      : "/placeholder.png"
-                  }
-                  alt={product.name}
-                  width={600}
-                  height={400}
-                  className="w-full h-48 object-cover"
-                />
+               
+
+<Image
+  src={
+    product.images && product.images.length > 0
+      ? `${backendUrl}${product.images[0].image}`
+      : "/placeholder.png"
+  }
+  alt={product.name}
+  width={600}
+  height={400}
+  className="w-full h-48 object-cover"
+/>
               </CardHeader>
               <CardContent className="p-6 flex-grow">
                 <Badge
