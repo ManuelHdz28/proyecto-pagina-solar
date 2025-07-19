@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         pathname: '/media/**',
       },
       {
+      protocol: 'https',
+      hostname: 'res.cloudinary.com',
+      pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: 'grupo-mc-solar.onrender.com',
         port: '',

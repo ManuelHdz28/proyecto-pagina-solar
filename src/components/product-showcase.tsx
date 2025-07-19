@@ -46,6 +46,8 @@ const categories = [
   { name: "Inversores y Soportes", icon: Home },
 ];
 
+
+
 export function ProductShowcase() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
@@ -108,47 +110,51 @@ export function ProductShowcase() {
 
       {/* Productos */}
       {filteredProducts.length > 0 ? (
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <Card
-              key={product.id}
-              onClick={() => setSelectedProduct(product)}
-              className="flex flex-col cursor-pointer overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
-            >
-              <CardHeader className="p-0">
-               
-
-<Image
-  src={
+          {filteredProducts.map((product) => {
+  const imageSrc =
     product.images && product.images.length > 0
-      ? `${backendUrl}${product.images[0].image}`
-      : "/placeholder.png"
-  }
+      ? product.images[0].image.startsWith("http")
+        ? product.images[0].image
+        : `${backendUrl}${product.images[0].image}`
+      : "/placeholder.png";
+
+  return (
+    <Card
+      key={product.id}
+      onClick={() => setSelectedProduct(product)}
+      className="flex flex-col cursor-pointer overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
+    >
+      <CardHeader className="p-0">
+        <Image
+  src={imageSrc}
   alt={product.name}
   width={600}
   height={400}
   className="w-full h-48 object-cover"
 />
-              </CardHeader>
-              <CardContent className="p-6 flex-grow">
-                <Badge
-                  variant="outline"
-                  className="mt-2 bg-accent/20 text-accent-foreground border-accent"
-                >
-                  {product.category_name}
-                </Badge>
-                <CardTitle className="mt-2">{product.name}</CardTitle>
-                <CardDescription className="mt-4">
-                  {product.description}
-                </CardDescription>
-              </CardContent>
-              <CardFooter className="p-6 pt-0 mt-auto">
-                <p className="text-2xl font-bold text-primary">
-                  ${parseFloat(product.price).toFixed(2)}
-                </p>
-              </CardFooter>
-            </Card>
-          ))}
+      </CardHeader>
+      <CardContent className="p-6 flex-grow">
+        <Badge
+          variant="outline"
+          className="mt-2 bg-accent/20 text-accent-foreground border-accent"
+        >
+          {product.category_name}
+        </Badge>
+        <CardTitle className="mt-2">{product.name}</CardTitle>
+        <CardDescription className="mt-4">
+          {product.description}
+        </CardDescription>
+      </CardContent>
+      <CardFooter className="p-6 pt-0 mt-auto">
+        <p className="text-2xl font-bold text-primary">
+          ${parseFloat(product.price).toFixed(2)}
+        </p>
+      </CardFooter>
+    </Card>
+  );
+})}
         </div>
       ) : (
         <div className="text-center py-16 bg-card/50 rounded-lg">
