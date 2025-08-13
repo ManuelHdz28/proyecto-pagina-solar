@@ -20,7 +20,7 @@ export function SocialLinks({ className }: { className?: string }) {
         <Mail className="h-6 w-6" />
       </Link>
       <Link
-        href="https://wa.me/50376398878"
+        href="https://wa.me/50322238517"
         target="_blank"
         rel="noopener noreferrer"
         className="hover:text-primary transition-colors"
