@@ -86,11 +86,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-lg text-foreground/90">
-                Brindar soluciones de climatización y energia que combinen
-                tecnologia de vanguardia y eficiencia, ofreciendo grandes
-                acondicionados, sisstemas de geberacion de energia y lamaparas
-                solares diseñados para maximizar el ahorro y mejorar el confort
-                de nuestros clientes.
+                Brindar soluciones de climatización y energía que combinen tecnología de vanguardia y eficiencia, ofreciendo aires acondicionados, sistemas de generación de energía y lámparas solares diseñados para maximizar el ahorro y mejorar el confort de nuestros clientes.
               </p>
             </CardContent>
           </Card>
@@ -104,11 +100,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-lg text-foreground/90">
-                Convertirnos en lideres del sector energetico y de
-                climatizacion, destacando por la integracion de tecnologia
-                avanzada, sistemas de generacion de energia y soluciones de
-                eficiencia que optimicen el consumo y reduzcan costos a nuestros
-                clientes.
+                Convertirnos en líderes del sector energético y de climatización, destacando por la integración de tecnología avanzada, sistemas de generación de energía y soluciones de eficiencia que optimicen el consumo y reduzcan costos a nuestros clientes.
               </p>
             </CardContent>
           </Card>
@@ -161,7 +153,7 @@ export default function Home() {
                       d="M3 5a2 2 0 012-2h3.6a1 1 0 01.95.68l1.14 3.42a1 1 0 01-.24 1.02l-2.13 2.13a11.05 11.05 0 005.66 5.66l2.13-2.13a1 1 0 011.02-.24l3.42 1.14a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                     />
                   </svg>
-                  7639-8878
+                  2223-8517
                 </p>
                 {/* Solo Facebook como enlace */}
                 <div className="flex justify-center md:justify-start">
