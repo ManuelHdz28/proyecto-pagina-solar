@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ProductModal from "@/components/ProductModal";
+import { useSearchParams } from "next/navigation";
+
 
 export type Product = {
   id: number;
@@ -49,11 +51,20 @@ const categories = [
 
 
 export function ProductShowcase() {
+  const searchParams = useSearchParams();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const backendUrl = "https://grupo-mc-solar.onrender.com";
+
+  useEffect(() => {
+  const cat = searchParams.get("cat");
+  if (!cat) return;
+  const valid = ["Todos","Paneles","Aire Acondicionado","Lámparas Solares","Inversores y Soportes"];
+  setSelectedCategory(valid.includes(cat) ? cat : "Todos");
+}, [searchParams]);
 
   useEffect(() => {
     async function loadProducts() {

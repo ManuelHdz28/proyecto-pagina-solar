@@ -14,6 +14,9 @@ import { Separator } from "@/components/ui/separator";
 import { SocialLinks } from "@/components/social-links";
 import Image from "next/image";
 
+import { HeaderCategoryMenu } from "@/components/header-category-menu";
+import { BackgroundSlideshow } from "@/components/background-slideshow";
+
 const testimonials = [
   {
     id: "t1",
@@ -45,16 +48,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="container mx-auto py-6 px-4 md:px-6">
-        <Logo />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+          <Logo />
+          <HeaderCategoryMenu />
+        </div>
       </header>
 
       <main className="container mx-auto px-4 md:px-6">
-        <section className="relative bg-[url('/foto-background.jpg')] bg-cover bg-center bg-no-repeat min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center">
-          {/* Overlay oscuro */}
-          <div className="absolute inset-0 bg-black/60 z-0"></div>
-
-          {/* Contenido */}
-          <div className="relative z-10 text-center px-4">
+        <BackgroundSlideshow
+          images={["/foto-background.jpg", "/foto2.jpg", "/foto3.jpg"]}
+          intervalMs={7000}
+          className="min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center"
+        >
+          <div className="text-center px-4">
             <h1 className="text-3xl md:text-5xl font-bold leading-tight text-primary">
               Energía solar para un futuro sin límites
             </h1>
@@ -66,7 +72,7 @@ export default function Home() {
               <SocialLinks />
             </div>
           </div>
-        </section>
+        </BackgroundSlideshow>
 
         <section id="products" className="py-12 md:py-16">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">
@@ -86,7 +92,11 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-lg text-foreground/90">
-                Brindar soluciones de climatización y energía que combinen tecnología de vanguardia y eficiencia, ofreciendo aires acondicionados, sistemas de generación de energía y lámparas solares diseñados para maximizar el ahorro y mejorar el confort de nuestros clientes.
+                Brindar soluciones de climatización y energía que combinen
+                tecnología de vanguardia y eficiencia, ofreciendo aires
+                acondicionados, sistemas de generación de energía y lámparas
+                solares diseñados para maximizar el ahorro y mejorar el confort
+                de nuestros clientes.
               </p>
             </CardContent>
           </Card>
@@ -100,7 +110,11 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-lg text-foreground/90">
-                Convertirnos en líderes del sector energético y de climatización, destacando por la integración de tecnología avanzada, sistemas de generación de energía y soluciones de eficiencia que optimicen el consumo y reduzcan costos a nuestros clientes.
+                Convertirnos en líderes del sector energético y de
+                climatización, destacando por la integración de tecnología
+                avanzada, sistemas de generación de energía y soluciones de
+                eficiencia que optimicen el consumo y reduzcan costos a nuestros
+                clientes.
               </p>
             </CardContent>
           </Card>

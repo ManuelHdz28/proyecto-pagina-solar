@@ -70,3 +70,7 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Oculta scrollbar en navegadores modernos */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
