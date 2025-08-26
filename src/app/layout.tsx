@@ -1,17 +1,17 @@
-import type {Metadata} from 'next';
-import './globals.css';
+// app/layout.tsx
+import type { Metadata } from "next";
+import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Suspense } from "react"; // ⬅️ nuevo
 
 export const metadata: Metadata = {
-  title: 'GRUPO MC SOLAR',
-  description: 'Top-tier solar panel solutions to power your future.',
+  title: "GRUPO MC SOLAR",
+  description: "Top-tier solar panel solutions to power your future.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
       <head>
@@ -20,7 +20,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
         <Toaster />
       </body>
     </html>

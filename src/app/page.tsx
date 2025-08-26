@@ -1,3 +1,4 @@
+// app/page.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,36 +14,11 @@ import { ContactForm } from "@/components/seo-tool";
 import { Separator } from "@/components/ui/separator";
 import { SocialLinks } from "@/components/social-links";
 import Image from "next/image";
-
 import { HeaderCategoryMenu } from "@/components/header-category-menu";
 import { BackgroundSlideshow } from "@/components/background-slideshow";
+import { Suspense } from "react"; // ⬅️ nuevo
 
-const testimonials = [
-  {
-    id: "t1",
-    name: "Sarah L.",
-    location: "Austin, TX",
-    comment:
-      "MC Solar made the switch to solar seamless. Our energy bills have never been lower, and the team was professional from start to finish. Highly recommend!",
-    avatarUrl: "https://placehold.co/100x100.png",
-  },
-  {
-    id: "t2",
-    name: "David Chen",
-    location: "Phoenix, AZ",
-    comment:
-      "The performance of the panels is outstanding, even in the Arizona heat. We're now producing more energy than we consume. A fantastic investment.",
-    avatarUrl: "https://placehold.co/100x100.png",
-  },
-  {
-    id: "t3",
-    name: "Maria Garcia",
-    location: "Miami, FL",
-    comment:
-      "I was impressed with their customer service and the quality of the installation. The Powerwall battery gives us peace of mind during hurricane season.",
-    avatarUrl: "https://placehold.co/100x100.png",
-  },
-];
+
 
 export default function Home() {
   return (
@@ -50,7 +26,9 @@ export default function Home() {
       <header className="container mx-auto py-6 px-4 md:px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
           <Logo />
-          <HeaderCategoryMenu />
+          <Suspense fallback={null}>
+            <HeaderCategoryMenu />
+          </Suspense>
         </div>
       </header>
 
@@ -65,8 +43,7 @@ export default function Home() {
               Energía solar para un futuro sin límites
             </h1>
             <p className="mt-2 text-lg md:text-xl text-white">
-              Liderando el camino hacia un futuro más limpio y eficiente con
-              energía solar
+              Liderando el camino hacia un futuro más limpio y eficiente con energía solar
             </p>
             <div className="mt-4 text-white">
               <SocialLinks />
@@ -78,7 +55,9 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">
             Nuestros productos
           </h2>
-          <ProductShowcase />
+          <Suspense fallback={null}>
+            <ProductShowcase />
+          </Suspense>
         </section>
 
         <Separator className="my-8 bg-border/50" />
