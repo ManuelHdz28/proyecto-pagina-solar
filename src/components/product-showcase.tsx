@@ -29,7 +29,6 @@ import { Badge } from "@/components/ui/badge";
 import ProductModal from "@/components/ProductModal";
 import { useSearchParams } from "next/navigation";
 
-
 export type Product = {
   id: number;
   name: string;
@@ -48,8 +47,6 @@ const categories = [
   { name: "Inversores y Soportes", icon: Home },
 ];
 
-
-
 export function ProductShowcase() {
   const searchParams = useSearchParams();
 
@@ -57,20 +54,47 @@ export function ProductShowcase() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // estado nuevo
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const backendUrl = "https://grupo-mc-solar.onrender.com";
 
   useEffect(() => {
-  const cat = searchParams.get("cat");
-  if (!cat) return;
-  const valid = ["Todos","Paneles","Aire Acondicionado","Lámparas Solares","Inversores y Soportes"];
-  setSelectedCategory(valid.includes(cat) ? cat : "Todos");
-}, [searchParams]);
+    const cat = searchParams.get("cat");
+    if (!cat) return;
+    const valid = [
+      "Todos",
+      "Paneles",
+      "Aire Acondicionado",
+      "Lámparas Solares",
+      "Inversores y Soportes",
+    ];
+    setSelectedCategory(valid.includes(cat) ? cat : "Todos");
+  }, [searchParams]);
 
   useEffect(() => {
     async function loadProducts() {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/`)
-      const data = await res.json();
-      setProducts(data);
+      try {
+        setIsLoading(true);
+        setErrorMsg(null);
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products/`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setErrorMsg("No se pudieron cargar los productos. Intenta nuevamente.");
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadProducts();
   }, []);
@@ -85,6 +109,8 @@ export function ProductShowcase() {
     return matchesCategory && matchesSearch;
   });
 
+  const hasAnyProducts = products.length > 0;
+
   return (
     <div className="space-y-8">
       {/* Buscador y categorías */}
@@ -97,6 +123,7 @@ export function ProductShowcase() {
             className="pl-10 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Buscar productos"
           />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -119,60 +146,84 @@ export function ProductShowcase() {
         </div>
       </div>
 
-      {/* Productos */}
-      {filteredProducts.length > 0 ? (
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => {
-  const imageSrc =
-    product.images && product.images.length > 0
-      ? product.images[0].image.startsWith("http")
-        ? product.images[0].image
-        : `${backendUrl}${product.images[0].image}`
-      : "/placeholder.png";
-
-  return (
-    <Card
-      key={product.id}
-      onClick={() => setSelectedProduct(product)}
-      className="flex flex-col cursor-pointer overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
-    >
-      <CardHeader className="p-0">
-        <Image
-  src={imageSrc}
-  alt={product.name}
-  width={600}
-  height={400}
-  className="w-full h-48 object-cover"
-/>
-      </CardHeader>
-      <CardContent className="p-6 flex-grow">
-        <Badge
-          variant="outline"
-          className="mt-2 bg-accent/20 text-accent-foreground border-accent"
+      {/* Estado de error (opcional) */}
+      {errorMsg && !isLoading && (
+        <div
+          className="text-center py-4 rounded-lg border border-destructive/50 text-destructive bg-destructive/10"
+          role="alert"
         >
-          {product.category_name}
-        </Badge>
-        <CardTitle className="mt-2">{product.name}</CardTitle>
-        <CardDescription className="mt-4">
-          {product.description}
-        </CardDescription>
-      </CardContent>
-      <CardFooter className="p-6 pt-0 mt-auto">
-        <p className="text-2xl font-bold text-primary">
-          ${parseFloat(product.price).toFixed(2)}
-        </p>
-      </CardFooter>
-    </Card>
-  );
-})}
+          {errorMsg}
         </div>
-      ) : (
+      )}
+
+      {/* Contenido: loading → grid → vacíos */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-24 text-muted-foreground">
+          <Sun className="h-8 w-8 animate-spin-slow" aria-label="Cargando productos" />
+          <span className="ml-3">Cargando productos…</span>
+        </div>
+      ) : !hasAnyProducts ? (
+        // Sin productos desde la API
+        <div className="text-center py-16 bg-card/50 rounded-lg">
+          <p className="text-xl font-medium">No hay productos</p>
+          <p className="text-muted-foreground mt-2">
+            Próximamente añadiremos existencias.
+          </p>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        // Hay productos pero no coinciden con el filtro/búsqueda
         <div className="text-center py-16 bg-card/50 rounded-lg">
           <p className="text-xl font-medium">No se encuentran productos</p>
           <p className="text-muted-foreground mt-2">
-            Intenta ajustar tu búsqueda o filtro.
+            Ajusta tu búsqueda o categoría.
           </p>
+        </div>
+      ) : (
+        // Grid de productos
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((product) => {
+            const imageSrc =
+              product.images && product.images.length > 0
+                ? product.images[0].image.startsWith("http")
+                  ? product.images[0].image
+                  : `${backendUrl}${product.images[0].image}`
+                : "/placeholder.png";
+
+            return (
+              <Card
+                key={product.id}
+                onClick={() => setSelectedProduct(product)}
+                className="flex flex-col cursor-pointer overflow-hidden bg-card/70 backdrop-blur-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
+              >
+                <CardHeader className="p-0">
+                  <Image
+                    src={imageSrc}
+                    alt={product.name}
+                    width={600}
+                    height={400}
+                    className="w-full h-48 object-cover"
+                  />
+                </CardHeader>
+                <CardContent className="p-6 flex-grow">
+                  <Badge
+                    variant="outline"
+                    className="mt-2 bg-accent/20 text-accent-foreground border-accent"
+                  >
+                    {product.category_name}
+                  </Badge>
+                  <CardTitle className="mt-2">{product.name}</CardTitle>
+                  <CardDescription className="mt-4">
+                    {product.description}
+                  </CardDescription>
+                </CardContent>
+                <CardFooter className="p-6 pt-0 mt-auto">
+                  <p className="text-2xl font-bold text-primary">
+                    ${parseFloat(product.price).toFixed(2)}
+                  </p>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -186,3 +237,4 @@ export function ProductShowcase() {
     </div>
   );
 }
+
