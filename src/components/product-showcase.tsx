@@ -1,33 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  Search,
-  Zap,
-  Battery,
-  Wrench,
-  Sprout,
-  Home,
-  Sun,
-  Fan,
-  Wind,
-  Snowflake,
-  Lightbulb,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useSearchParams } from "next/navigation";
+import { Sun, Search, Sprout, Zap, Snowflake, Lightbulb, Home } from "lucide-react";
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ProductModal from "@/components/ProductModal";
-import { useSearchParams } from "next/navigation";
 
 export type Product = {
   id: number;
@@ -47,7 +29,7 @@ const categories = [
   { name: "Inversores y Soportes", icon: Home },
 ];
 
-export function ProductShowcase() {
+export default function ProductShowcase() {
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,22 +37,20 @@ export function ProductShowcase() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // estado nuevo
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const backendUrl = "https://grupo-mc-solar.onrender.com";
+  // URL base segura (lee NEXT_PUBLIC_API_URL y quita "/" final). Fallback a localhost para dev.
+  const API_BASE =
+    (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) || "http://localhost:8000";
+
+  // Si tus imágenes son relativas, úsalas con este backend (Render o local)
+  const BACKEND_MEDIA_BASE = API_BASE;
 
   useEffect(() => {
     const cat = searchParams.get("cat");
     if (!cat) return;
-    const valid = [
-      "Todos",
-      "Paneles",
-      "Aire Acondicionado",
-      "Lámparas Solares",
-      "Inversores y Soportes",
-    ];
+    const valid = categories.map((c) => c.name);
     setSelectedCategory(valid.includes(cat) ? cat : "Todos");
   }, [searchParams]);
 
@@ -80,16 +60,22 @@ export function ProductShowcase() {
         setIsLoading(true);
         setErrorMsg(null);
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products/`,
-          { cache: "no-store" }
-        );
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        const res = await fetch(`${API_BASE}/api/products/`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         const data = await res.json();
-        setProducts(Array.isArray(data) ? data : []);
+
+        // Normaliza: soporta array directo y respuestas paginadas u otras llaves comunes
+        const items: Product[] =
+          (Array.isArray(data) && data) ||
+          (Array.isArray(data?.results) && data.results) ||
+          (Array.isArray(data?.data) && data.data) ||
+          (Array.isArray(data?.items) && data.items) ||
+          [];
+
+        setProducts(items);
       } catch (err) {
+        console.error("Error al cargar productos:", err);
         setErrorMsg("No se pudieron cargar los productos. Intenta nuevamente.");
         setProducts([]);
       } finally {
@@ -97,15 +83,13 @@ export function ProductShowcase() {
       }
     }
     loadProducts();
-  }, []);
+  }, [API_BASE]);
 
   const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      selectedCategory === "Todos" ||
-      product.category_name === selectedCategory;
+    const matchesCategory = selectedCategory === "Todos" || product.category_name === selectedCategory;
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      product.name.toLowerCase().includes(q) || product.description.toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
@@ -113,7 +97,7 @@ export function ProductShowcase() {
 
   return (
     <div className="space-y-8">
-      {/* Buscador y categorías */}
+      {/* Buscador + categorías */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -126,17 +110,18 @@ export function ProductShowcase() {
             aria-label="Buscar productos"
           />
         </div>
+
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
           {categories.map((category) => {
             const Icon = category.icon;
+            const isActive = selectedCategory === category.name;
             return (
               <Button
                 key={category.name}
-                variant={
-                  selectedCategory === category.name ? "default" : "secondary"
-                }
+                variant={isActive ? "default" : "secondary"}
                 onClick={() => setSelectedCategory(category.name)}
                 className="flex-shrink-0"
+                aria-pressed={isActive}
               >
                 <Icon className="mr-2 h-4 w-4" />
                 {category.name}
@@ -146,7 +131,7 @@ export function ProductShowcase() {
         </div>
       </div>
 
-      {/* Estado de error (opcional) */}
+      {/* Error visible */}
       {errorMsg && !isLoading && (
         <div
           className="text-center py-4 rounded-lg border border-destructive/50 text-destructive bg-destructive/10"
@@ -156,37 +141,30 @@ export function ProductShowcase() {
         </div>
       )}
 
-      {/* Contenido: loading → grid → vacíos */}
+      {/* Loading → Sin productos (solo si NO hay error) → Sin coincidencias → Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-24 text-muted-foreground">
           <Sun className="h-8 w-8 animate-spin-slow" aria-label="Cargando productos" />
           <span className="ml-3">Cargando productos…</span>
         </div>
-      ) : !hasAnyProducts ? (
-        // Sin productos desde la API
+      ) : !errorMsg && !hasAnyProducts ? (
         <div className="text-center py-16 bg-card/50 rounded-lg">
           <p className="text-xl font-medium">No hay productos</p>
-          <p className="text-muted-foreground mt-2">
-            Próximamente añadiremos existencias.
-          </p>
+          <p className="text-muted-foreground mt-2">Próximamente añadiremos existencias.</p>
         </div>
-      ) : filteredProducts.length === 0 ? (
-        // Hay productos pero no coinciden con el filtro/búsqueda
+      ) : hasAnyProducts && filteredProducts.length === 0 ? (
         <div className="text-center py-16 bg-card/50 rounded-lg">
           <p className="text-xl font-medium">No se encuentran productos</p>
-          <p className="text-muted-foreground mt-2">
-            Ajusta tu búsqueda o categoría.
-          </p>
+          <p className="text-muted-foreground mt-2">Ajusta tu búsqueda o categoría.</p>
         </div>
       ) : (
-        // Grid de productos
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => {
             const imageSrc =
               product.images && product.images.length > 0
                 ? product.images[0].image.startsWith("http")
                   ? product.images[0].image
-                  : `${backendUrl}${product.images[0].image}`
+                  : `${BACKEND_MEDIA_BASE}${product.images[0].image}`
                 : "/placeholder.png";
 
             return (
@@ -204,6 +182,7 @@ export function ProductShowcase() {
                     className="w-full h-48 object-cover"
                   />
                 </CardHeader>
+
                 <CardContent className="p-6 flex-grow">
                   <Badge
                     variant="outline"
@@ -211,14 +190,15 @@ export function ProductShowcase() {
                   >
                     {product.category_name}
                   </Badge>
+
                   <CardTitle className="mt-2">{product.name}</CardTitle>
-                  <CardDescription className="mt-4">
-                    {product.description}
-                  </CardDescription>
+
+                  <CardDescription className="mt-4">{product.description}</CardDescription>
                 </CardContent>
+
                 <CardFooter className="p-6 pt-0 mt-auto">
                   <p className="text-2xl font-bold text-primary">
-                    ${parseFloat(product.price).toFixed(2)}
+                    ${Number.parseFloat(product.price).toFixed(2)}
                   </p>
                 </CardFooter>
               </Card>
@@ -227,12 +207,9 @@ export function ProductShowcase() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal de detalle */}
       {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
+        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
     </div>
   );
