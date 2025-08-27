@@ -6,12 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Sun, Search, Sprout, Zap, Snowflake, Lightbulb, Home } from "lucide-react";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,7 +17,7 @@ export type Product = {
   id: number;
   name: string;
   description: string;
-  price: string;
+  price: string | number;
   category: number;
   category_name: string;
   images: { id: number; image: string }[];
@@ -36,6 +31,25 @@ const categories = [
   { name: "Inversores y Soportes", icon: Home },
 ];
 
+// Encuentra el primer arreglo útil dentro de cualquier forma de respuesta
+function extractArray(data: any): any[] {
+  if (Array.isArray(data)) return data;
+
+  const preferredKeys = ["results", "data", "items", "products", "objects"];
+  for (const k of preferredKeys) {
+    if (Array.isArray(data?.[k])) return data[k];
+  }
+
+  // fallback: primer propiedad que sea array de objetos
+  if (data && typeof data === "object") {
+    for (const k of Object.keys(data)) {
+      const v = (data as any)[k];
+      if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") return v;
+    }
+  }
+  return [];
+}
+
 function ProductShowcase() {
   const searchParams = useSearchParams();
 
@@ -47,13 +61,6 @@ function ProductShowcase() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Lee NEXT_PUBLIC_API_URL y quita "/" final. Fallback a localhost en dev.
-  const API_BASE =
-    (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) || "http://localhost:8000";
-
-  // Si las URLs de imagen vienen relativas, préfix con el backend
-  const BACKEND_MEDIA_BASE = API_BASE;
-
   useEffect(() => {
     const cat = searchParams.get("cat");
     if (!cat) return;
@@ -63,47 +70,72 @@ function ProductShowcase() {
 
   useEffect(() => {
     async function loadProducts() {
-      try {
-        setIsLoading(true);
-        setErrorMsg(null);
+      setIsLoading(true);
+      setErrorMsg(null);
 
-        const res = await fetch(`${API_BASE}/api/products/`, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      try {
+        // Resuelve API_BASE de forma segura en cliente
+        const envBase = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+        const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+        const API_BASE = envBase || (isLocal ? "http://localhost:8000" : "");
+
+        if (!API_BASE) {
+          throw new Error(
+            "Falta NEXT_PUBLIC_API_URL en producción. Define la variable o usa localhost en dev."
+          );
+        }
+
+        // Bloqueo por mixed content (https página → http API)
+        if (typeof window !== "undefined" &&
+            window.location.protocol === "https:" &&
+            API_BASE.startsWith("http://")) {
+          throw new Error(
+            `Bloqueado por mixed content: la página es HTTPS pero la API es HTTP (${API_BASE}). Usa HTTPS en la API.`
+          );
+        }
+
+        const url = `${API_BASE}/api/products/`;
+        console.debug("[Products] Fetching:", url);
+
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status} al cargar ${url}`);
 
         const data = await res.json();
+        const items = extractArray(data) as Product[];
 
-        // Normaliza distintos formatos de respuesta
-        const items: Product[] =
-          (Array.isArray(data) && data) ||
-          (Array.isArray(data?.results) && data.results) ||
-          (Array.isArray(data?.data) && data.data) ||
-          (Array.isArray(data?.items) && data.items) ||
-          [];
+        console.debug("[Products] items:", items.length, { sample: items[0] });
 
         setProducts(items);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error al cargar productos:", err);
-        setErrorMsg("No se pudieron cargar los productos. Intenta nuevamente.");
         setProducts([]);
+        setErrorMsg(
+          err?.message ||
+            "No se pudieron cargar los productos. Verifica la API y vuelve a intentar."
+        );
       } finally {
         setIsLoading(false);
       }
     }
 
     loadProducts();
-  }, [API_BASE]);
+  }, []);
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory =
       selectedCategory === "Todos" || product.category_name === selectedCategory;
     const q = searchQuery.toLowerCase();
     const matchesSearch =
-      product.name.toLowerCase().includes(q) ||
-      product.description.toLowerCase().includes(q);
+      (product.name || "").toLowerCase().includes(q) ||
+      (product.description || "").toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
   const hasAnyProducts = products.length > 0;
+
+  const BACKEND_MEDIA_BASE =
+    (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) ||
+    "http://localhost:8000";
 
   return (
     <div className="space-y-8">
@@ -177,6 +209,11 @@ function ProductShowcase() {
                   : `${BACKEND_MEDIA_BASE}${product.images[0].image}`
                 : "/placeholder.png";
 
+            const priceNum =
+              typeof product.price === "number"
+                ? product.price
+                : Number.parseFloat(String(product.price ?? "0"));
+
             return (
               <Card
                 key={product.id}
@@ -194,23 +231,16 @@ function ProductShowcase() {
                 </CardHeader>
 
                 <CardContent className="p-6 flex-grow">
-                  <Badge
-                    variant="outline"
-                    className="mt-2 bg-accent/20 text-accent-foreground border-accent"
-                  >
+                  <Badge variant="outline" className="mt-2 bg-accent/20 border-accent">
                     {product.category_name}
                   </Badge>
-
                   <CardTitle className="mt-2">{product.name}</CardTitle>
-
-                  <CardDescription className="mt-4">
-                    {product.description}
-                  </CardDescription>
+                  <CardDescription className="mt-4">{product.description}</CardDescription>
                 </CardContent>
 
                 <CardFooter className="p-6 pt-0 mt-auto">
                   <p className="text-2xl font-bold text-primary">
-                    ${Number.parseFloat(product.price).toFixed(2)}
+                    ${isFinite(priceNum) ? priceNum.toFixed(2) : "0.00"}
                   </p>
                 </CardFooter>
               </Card>
@@ -227,7 +257,6 @@ function ProductShowcase() {
   );
 }
 
-// Exporta de ambas maneras:
 export default ProductShowcase;
 export { ProductShowcase };
 
