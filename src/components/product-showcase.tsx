@@ -5,7 +5,14 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Sun, Search, Sprout, Zap, Snowflake, Lightbulb, Home } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +36,7 @@ const categories = [
   { name: "Inversores y Soportes", icon: Home },
 ];
 
-export default function ProductShowcase() {
+function ProductShowcase() {
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,11 +47,11 @@ export default function ProductShowcase() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // URL base segura (lee NEXT_PUBLIC_API_URL y quita "/" final). Fallback a localhost para dev.
+  // Lee NEXT_PUBLIC_API_URL y quita "/" final. Fallback a localhost en dev.
   const API_BASE =
     (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) || "http://localhost:8000";
 
-  // Si tus imágenes son relativas, úsalas con este backend (Render o local)
+  // Si las URLs de imagen vienen relativas, préfix con el backend
   const BACKEND_MEDIA_BASE = API_BASE;
 
   useEffect(() => {
@@ -65,7 +72,7 @@ export default function ProductShowcase() {
 
         const data = await res.json();
 
-        // Normaliza: soporta array directo y respuestas paginadas u otras llaves comunes
+        // Normaliza distintos formatos de respuesta
         const items: Product[] =
           (Array.isArray(data) && data) ||
           (Array.isArray(data?.results) && data.results) ||
@@ -82,14 +89,17 @@ export default function ProductShowcase() {
         setIsLoading(false);
       }
     }
+
     loadProducts();
   }, [API_BASE]);
 
   const filteredProducts = products.filter((product) => {
-    const matchesCategory = selectedCategory === "Todos" || product.category_name === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "Todos" || product.category_name === selectedCategory;
     const q = searchQuery.toLowerCase();
     const matchesSearch =
-      product.name.toLowerCase().includes(q) || product.description.toLowerCase().includes(q);
+      product.name.toLowerCase().includes(q) ||
+      product.description.toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
@@ -193,7 +203,9 @@ export default function ProductShowcase() {
 
                   <CardTitle className="mt-2">{product.name}</CardTitle>
 
-                  <CardDescription className="mt-4">{product.description}</CardDescription>
+                  <CardDescription className="mt-4">
+                    {product.description}
+                  </CardDescription>
                 </CardContent>
 
                 <CardFooter className="p-6 pt-0 mt-auto">
@@ -214,4 +226,8 @@ export default function ProductShowcase() {
     </div>
   );
 }
+
+// Exporta de ambas maneras:
+export default ProductShowcase;
+export { ProductShowcase };
 
