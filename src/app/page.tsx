@@ -17,7 +17,7 @@ import Image from "next/image";
 import { HeaderCategoryMenu } from "@/components/header-category-menu";
 import { BackgroundSlideshow } from "@/components/background-slideshow";
 import { Suspense } from "react"; // ⬅️ nuevo
-import { Sun } from "lucide-react";
+
 
 
 export default function Home() {
@@ -55,16 +55,9 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">
             Nuestros productos
           </h2>
-          <Suspense
-  fallback={
-    <div className="flex items-center justify-center py-24 text-muted-foreground">
-      <Sun className="h-8 w-8 animate-spin-slow" aria-label="Cargando productos" />
-      <span className="ml-3">Cargando productos…</span>
-    </div>
-  }
->
-  <ProductShowcase />
-</Suspense>
+          <Suspense fallback={null}>
+            <ProductShowcase />
+          </Suspense>
         </section>
 
         <Separator className="my-8 bg-border/50" />
@@ -207,3 +200,4 @@ export default function Home() {
     </div>
   );
 }
+
