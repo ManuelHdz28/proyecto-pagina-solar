@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Sun, Search, Sprout, Zap, Snowflake, Lightbulb, Home } from "lucide-react";
@@ -19,37 +19,44 @@ export type Product = {
   description: string;
   price: string | number;
   category: number;
-  category_name: string;
+  category_name: string; // viene del backend
   images: { id: number; image: string }[];
 };
 
-const categories = [
-  { name: "Todos", icon: Sprout },
-  { name: "Paneles", icon: Zap },
-  { name: "Aire Acondicionado", icon: Snowflake },
-  { name: "Lámparas Solares", icon: Lightbulb },
-  { name: "Inversores y Soportes", icon: Home },
-];
+// ==== utils ====
+const norm = (s: string) =>
+  (s || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
 
-// Encuentra el primer arreglo útil dentro de cualquier forma de respuesta
+function pickIcon(name: string) {
+  const n = norm(name);
+  if (n.includes("aire")) return Snowflake;
+  if (n.includes("lampara") || n.includes("luz")) return Lightbulb;
+  if (n.includes("panel")) return Zap;
+  if (n.includes("inversor") || n.includes("soporte") || n.includes("hogar")) return Home;
+  return Sprout; // genérica
+}
+
 function extractArray(data: any): any[] {
   if (Array.isArray(data)) return data;
-
-  const preferredKeys = ["results", "data", "items", "products", "objects"];
-  for (const k of preferredKeys) {
+  for (const k of ["results", "data", "items", "products", "objects"]) {
     if (Array.isArray(data?.[k])) return data[k];
   }
-
-  // fallback: primer propiedad que sea array de objetos
+  // fallback: 1er arreglo de objetos que encontremos
   if (data && typeof data === "object") {
     for (const k of Object.keys(data)) {
       const v = (data as any)[k];
-      if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") return v;
+      if (Array.isArray(v) && v.length && typeof v[0] === "object") return v;
     }
   }
   return [];
 }
 
+// ==== componente ====
 function ProductShowcase() {
   const searchParams = useSearchParams();
 
@@ -61,81 +68,95 @@ function ProductShowcase() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    const cat = searchParams.get("cat");
-    if (!cat) return;
-    const valid = categories.map((c) => c.name);
-    setSelectedCategory(valid.includes(cat) ? cat : "Todos");
-  }, [searchParams]);
+  // API base (cliente). Recuerda: en producción debe ser HTTPS si tu web es HTTPS.
+  const API_BASE =
+    (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) ||
+    (typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? "http://localhost:8000"
+      : "");
 
+  const BACKEND_MEDIA_BASE = API_BASE;
+
+  // Carga inicial
   useEffect(() => {
     async function loadProducts() {
       setIsLoading(true);
       setErrorMsg(null);
 
       try {
-        // Resuelve API_BASE de forma segura en cliente
-        const envBase = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-        const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
-        const API_BASE = envBase || (isLocal ? "http://localhost:8000" : "");
+        if (!API_BASE) throw new Error("Falta NEXT_PUBLIC_API_URL (o usa localhost en dev).");
 
-        if (!API_BASE) {
-          throw new Error(
-            "Falta NEXT_PUBLIC_API_URL en producción. Define la variable o usa localhost en dev."
-          );
-        }
-
-        // Bloqueo por mixed content (https página → http API)
         if (typeof window !== "undefined" &&
             window.location.protocol === "https:" &&
             API_BASE.startsWith("http://")) {
           throw new Error(
-            `Bloqueado por mixed content: la página es HTTPS pero la API es HTTP (${API_BASE}). Usa HTTPS en la API.`
+            `Mixed content: tu web es HTTPS pero la API es HTTP (${API_BASE}). Usa HTTPS en la API.`
           );
         }
 
         const url = `${API_BASE}/api/products/`;
-        console.debug("[Products] Fetching:", url);
-
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status} al cargar ${url}`);
 
         const data = await res.json();
         const items = extractArray(data) as Product[];
-
-        console.debug("[Products] items:", items.length, { sample: items[0] });
-
         setProducts(items);
       } catch (err: any) {
         console.error("Error al cargar productos:", err);
         setProducts([]);
-        setErrorMsg(
-          err?.message ||
-            "No se pudieron cargar los productos. Verifica la API y vuelve a intentar."
-        );
+        setErrorMsg(err?.message || "No se pudieron cargar los productos.");
       } finally {
         setIsLoading(false);
       }
     }
 
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Categorías dinámicas desde backend (más "Todos")
+  const dynamicCategories = useMemo(() => {
+    const names = Array.from(
+      new Set(products.map((p) => (p.category_name || "").trim()).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+    const cats = names.map((name) => ({ name, icon: pickIcon(name) }));
+    return [{ name: "Todos", icon: Sprout }, ...cats];
+  }, [products]);
+
+  // Lee ?cat= de la URL, pero sólo lo acepta si existe en las dinámicas
+  useEffect(() => {
+    const cat = searchParams.get("cat");
+    if (!cat) return;
+    const exists = dynamicCategories.some((c) => norm(c.name) === norm(cat));
+    setSelectedCategory(exists ? cat : "Todos");
+  }, [searchParams, dynamicCategories]);
+
+  // Si la categoría seleccionada deja de existir (cambió el backend), vuelve a "Todos"
+  useEffect(() => {
+    if (
+      selectedCategory !== "Todos" &&
+      !dynamicCategories.some((c) => norm(c.name) === norm(selectedCategory))
+    ) {
+      setSelectedCategory("Todos");
+    }
+  }, [dynamicCategories, selectedCategory]);
+
+  // Filtro robusto (ignora tildes y mayúsculas)
   const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      selectedCategory === "Todos" || product.category_name === selectedCategory;
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      (product.name || "").toLowerCase().includes(q) ||
-      (product.description || "").toLowerCase().includes(q);
-    return matchesCategory && matchesSearch;
+    const catOK =
+      selectedCategory === "Todos" ||
+      norm(product.category_name) === norm(selectedCategory);
+
+    const q = norm(searchQuery);
+    const searchOK =
+      !q ||
+      norm(product.name).includes(q) ||
+      norm(product.description).includes(q);
+
+    return catOK && searchOK;
   });
 
   const hasAnyProducts = products.length > 0;
-
-  const BACKEND_MEDIA_BASE =
-    (process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") as string) ||
-    "http://localhost:8000";
 
   return (
     <div className="space-y-8">
@@ -154,9 +175,9 @@ function ProductShowcase() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => {
+          {dynamicCategories.map((category) => {
             const Icon = category.icon;
-            const isActive = selectedCategory === category.name;
+            const isActive = norm(selectedCategory) === norm(category.name);
             return (
               <Button
                 key={category.name}
@@ -183,7 +204,7 @@ function ProductShowcase() {
         </div>
       )}
 
-      {/* Loading → Sin productos (solo si NO hay error) → Sin coincidencias → Grid */}
+      {/* Loading → Sin productos (NO error) → Sin coincidencias → Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-24 text-muted-foreground">
           <Sun className="h-8 w-8 animate-spin-slow" aria-label="Cargando productos" />
@@ -259,4 +280,3 @@ function ProductShowcase() {
 
 export default ProductShowcase;
 export { ProductShowcase };
-
